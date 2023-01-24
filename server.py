@@ -31,7 +31,9 @@ def reliable_recv(connection):
 def reliable_send(data):
     json_data = json.dumps(data)
     for client in clients:
-        client.send(json_data.encode())
+        index = clients.index(client) 
+        if nicknames[index] not in data:
+            client.send(json_data.encode())
 
 def single_send(c,data):
     json_data = json.dumps(data)
@@ -58,8 +60,8 @@ def handle(client):
            clients.remove(client)
            client.close()
            nickname = nicknames[index]
-           brodcast(nickname + " Left")
            nicknames.remove(nickname)
+           reliable_send(nickname + " Left")
            break
 def recieve():
     while True:

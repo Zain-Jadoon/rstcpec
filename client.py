@@ -46,8 +46,8 @@ def receive():
             break
 def write():
     while True:
-        message = input("=>") 
-        reliable_send(message)
+        message = input("") 
+        reliable_send(nickname + ": " + message)
 
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()
