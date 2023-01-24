@@ -5,6 +5,10 @@ import socket
 import json
 import time
 import threading
+import rsa
+import base64
+public_key, private_key = rsa.newkeys(1024)
+
 ip = "127.0.0.1"
 port = 6969
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,7 +19,7 @@ clients = []
 nicknames = []
 
 
-#OPENING KEY FILES
+#OPENING KEY FILE
 #file = open('keys/key.key', 'rb')  # Open the file as wb to read bytes
 #key = file.read()  # The key will be type bytes
 #file.close()
@@ -41,15 +45,15 @@ def single_send(c,data):
 
 def encrypt(thing):
     message = thing.encode()
-    f = Fernet(key)
-    encrypted = f.encrypt(message)
-    return encrypted.decode()
+    encrypted = rsa.encrypt(message, public_key)
+    return encrypted
 
 def decrypt(thing):
-    encrypted = thing.encode()
-    f = Fernet(key)
-    decrypted = f.decrypt(encrypted)
+    decrypted = rsa.decrypt(thing, private_key)
     return decrypted.decode("utf-8")
+
+print(decrypt(encrypt("helo this is a test")))
+
 def handle(client):
     while True:
         try:
