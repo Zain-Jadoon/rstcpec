@@ -1,10 +1,13 @@
-#from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet
 import socket
 import json
 import threading
 nickname = input("what is ur nickname: ")
 connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 connection.connect(("127.0.0.1",6969))
+file = open("key.key", "rb")
+key = file.read()
+file.close()
 
 def encrypt(thing):
     message = thing.encode()
@@ -35,19 +38,19 @@ def reliable_recv():
 def receive():
     while True:
         try:
-            message = reliable_recv()
+            message = decrypt(reliable_recv())
             if message == "NICK":
-                reliable_send(nickname)
+                reliable_send(encrypt(nickname))
             else:
                 print(message)
         except:
             print("An error occoured")
-            client.close()
+            connection.close()
             break
 def write():
     while True:
         message = input("") 
-        reliable_send(nickname + ": " + message)
+        reliable_send(encrypt(nickname + ": " + message))
 
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()

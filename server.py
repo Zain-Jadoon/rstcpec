@@ -1,6 +1,6 @@
 ##### CHANCE FOR VULNRABILITY , KEYS MUST CHANGE EVERY TIME
 
-#from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet
 import socket
 import json
 import time
@@ -19,10 +19,9 @@ clients = []
 nicknames = []
 
 
-#OPENING KEY FILE
-#file = open('keys/key.key', 'rb')  # Open the file as wb to read bytes
-#key = file.read()  # The key will be type bytes
-#file.close()
+file = open('key.key', 'rb')  # Open the file as wb to read bytes
+key = file.read()  # The key will be type bytes
+file.close()
 
 def reliable_recv(connection):
     json_data = b""
@@ -36,7 +35,7 @@ def reliable_send(data):
     json_data = json.dumps(data)
     for client in clients:
         index = clients.index(client) 
-        if nicknames[index] not in data:
+        if nicknames[index] not in decrypt(data):
             client.send(json_data.encode())
 
 def single_send(c,data):
@@ -45,40 +44,42 @@ def single_send(c,data):
 
 def encrypt(thing):
     message = thing.encode()
-    encrypted = rsa.encrypt(message, public_key)
-    return encrypted
+    f = Fernet(key)
+    encrypted = f.encrypt(message)
+    return encrypted.decode()
 
 def decrypt(thing):
-    decrypted = rsa.decrypt(thing, private_key)
+    encrypted = thing.encode()
+    f = Fernet(key)
+    decrypted = f.decrypt(encrypted)
     return decrypted.decode("utf-8")
 
-print(decrypt(encrypt("helo this is a test")))
 
 def handle(client):
     while True:
         try:
-            message = reliable_recv(client)
-            reliable_send(message)
+            message = decrypt(reliable_recv(client))
+            reliable_send(encrypt(message))
         except:
            index = clients.index(client) 
            clients.remove(client)
            client.close()
            nickname = nicknames[index]
            nicknames.remove(nickname)
-           reliable_send(nickname + " Left")
+           reliable_send(encrypt(nickname + " Left"))
            break
 def recieve():
     while True:
         client, address = server.accept()
         print("connected with " + str(address))
 
-        single_send(client, "NICK")
-        nickname = reliable_recv(client)
+        single_send(client, encrypt("NICK"))
+        nickname = decrypt(reliable_recv(client))
         nicknames.append(nickname)
         clients.append(client)
 
         print("Nickname is " + nickname)
-        single_send(client, nickname + " joined")
+        single_send(client, encrypt(nickname + " joined"))
         thread = threading.Thread(target=handle, args=(client,))
         thread.start()
 recieve()
