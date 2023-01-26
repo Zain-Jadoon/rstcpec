@@ -1,5 +1,3 @@
-##### CHANCE FOR VULNRABILITY , KEYS MUST CHANGE EVERY TIME
-
 from cryptography.fernet import Fernet
 import socket
 import json
@@ -7,21 +5,30 @@ import time
 import threading
 import rsa
 import base64
-public_key, private_key = rsa.newkeys(1024)
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 ip = "127.0.0.1"
 port = 6969
+
+password = input("enter pass: ").encode()
+salt = b""
+kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+            )
+key = base64.urlsafe_b64encode(kdf.derive(password)) 
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind((ip, port))
+server.bind((ip, int(port)))
 server.listen(100)
 clients = []
 nicknames = []
-
-
-file = open('key.key', 'rb')  # Open the file as wb to read bytes
-key = file.read()  # The key will be type bytes
-file.close()
 
 def reliable_recv(connection):
     json_data = b""
